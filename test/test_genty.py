@@ -255,3 +255,27 @@ class GentyTest(TestCase):
                 33,
                 getattr(instance, 'test_unicode({})'.format(repr(char)))()
             )
+
+    def test_genty_properly_calls_patched_methods(self):
+        class PatchableClass(object):
+            @staticmethod
+            def my_method(num):
+                return num + 1
+
+        @genty
+        class SomeClass(object):
+            @genty_dataset(42)
+            @patch.object(PatchableClass, 'my_method')
+            def test_patched(self, num, mocked_method):
+                mocked_method.return_value = num
+                return PatchableClass.my_method(num)
+
+            @genty_dataset(42)
+            def test_unpatched(self, num):
+                return PatchableClass.my_method(num)
+
+        instance = SomeClass()
+        patched_method = getattr(instance, 'test_patched(42)')
+        self.assertEqual(42, patched_method())
+        unpatched_method = getattr(instance, 'test_unpatched(42)')
+        self.assertEqual(43, unpatched_method())
