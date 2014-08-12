@@ -5,7 +5,10 @@ import functools
 import inspect
 from unittest import TestCase
 from mock import patch
-from genty import genty, genty_dataset, genty_args, genty_repeat
+from box.test.genty import genty
+from box.test.genty import genty_dataset
+from box.test.genty import genty_repeat
+from box.test.genty.genty_args import genty_args
 
 
 class GentyTest(TestCase):
