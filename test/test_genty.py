@@ -3,22 +3,26 @@
 from __future__ import unicode_literals
 import functools
 import inspect
-from unittest import TestCase
 from mock import patch
+import six
+from six.moves import xrange  # pylint: disable=redefined-builtin,import-error
+from test.base_test_case import BaseTestCase
 from box.test.genty import genty
 from box.test.genty import genty_dataset
 from box.test.genty import genty_repeat
 from box.test.genty.genty_args import genty_args
+from box.test.genty.private import encode_non_ascii_string
 
 
-class GentyTest(TestCase):
+class GentyTest(BaseTestCase):
     """Tests for :mod:`box.test.genty.genty`."""
     # pylint: disable=no-self-use
     # Lots of the tests below create dummy methods that don't use 'self'.
 
     def _count_test_methods(self, target_cls):
+        method_filter = inspect.ismethod if six.PY2 else inspect.isfunction
         return len([
-            name for name, _ in inspect.getmembers(target_cls, inspect.ismethod)
+            name for name, _ in inspect.getmembers(target_cls, method_filter)
             if name.startswith('test')
         ])
 
@@ -161,17 +165,15 @@ class GentyTest(TestCase):
                 return wrapped
 
         @genty
+        @six.add_metaclass(SomeMeta)
         class SomeParent(object):
-            __metaclass__ = SomeMeta
-
             @genty_dataset(100, 10)
             def test_parent(self, val):
                 return val + 1
 
         @genty
+        @six.add_metaclass(SomeMeta)
         class SomeChild(SomeParent):
-            __metaclass__ = SomeMeta
-
             @genty_dataset('a', 'b')
             def test_child(self, val):
                 return val + val
@@ -181,11 +183,11 @@ class GentyTest(TestCase):
         self.assertEqual(4, self._count_test_methods(SomeChild))
         self.assertEqual(101, getattr(instance, 'test_parent(100)')())
         self.assertEqual(11, getattr(instance, 'test_parent(10)')())
-        self.assertEqual('aa', getattr(instance, "test_child(u'a')")())
-        self.assertEqual('bb', getattr(instance, "test_child(u'b')")())
+        self.assertEqual('aa', getattr(instance, "test_child({})".format(repr('a')))())
+        self.assertEqual('bb', getattr(instance, "test_child({})".format(repr('b')))())
 
-        entries = dict(SomeChild.__dict__.iteritems())
-        self.assertEqual(4, len([meth for name, meth in entries.iteritems() if name.startswith('test')]))
+        entries = dict(six.iteritems(SomeChild.__dict__))
+        self.assertEqual(4, len([meth for name, meth in six.iteritems(entries) if name.startswith('test')]))
         self.assertFalse(hasattr(instance, 'test_parent(100)(100)'), 'genty should not expand a test more than once')
         self.assertFalse(hasattr(instance, 'test_parent(100)(10)'), 'genty should not expand a test more than once')
         self.assertFalse(hasattr(instance, 'test_parent(100)(10)'), 'genty should not expand a test more than once')
@@ -232,10 +234,10 @@ class GentyTest(TestCase):
 
         # The test method should be expanded twice and the original method should be gone.
         self.assertEqual(4, self._count_test_methods(SomeClass))
-        self.assertEqual('firstfirst', getattr(instance, "test_repeat_and_dataset(u'first') iteration_1")())
-        self.assertEqual('firstfirst', getattr(instance, "test_repeat_and_dataset(u'first') iteration_2")())
-        self.assertEqual('secondsecond', getattr(instance, "test_repeat_and_dataset(u'second') iteration_1")())
-        self.assertEqual('secondsecond', getattr(instance, "test_repeat_and_dataset(u'second') iteration_2")())
+        self.assertEqual('firstfirst', getattr(instance, "test_repeat_and_dataset({}) iteration_1".format(repr('first')))())
+        self.assertEqual('firstfirst', getattr(instance, "test_repeat_and_dataset({}) iteration_2".format(repr('first')))())
+        self.assertEqual('secondsecond', getattr(instance, "test_repeat_and_dataset({}) iteration_1".format(repr('second')))())
+        self.assertEqual('secondsecond', getattr(instance, "test_repeat_and_dataset({}) iteration_2".format(repr('second')))())
 
         self.assertFalse(hasattr(instance, 'test_repeat_and_dataset'), "original method should not exist")
 
@@ -269,12 +271,12 @@ class GentyTest(TestCase):
 
         self.assertEqual(
             33,
-            getattr(instance, 'test_unicode({})'.format(repr(' Pȅtȅr')).encode('utf-8', 'replace'))()
+            getattr(instance, encode_non_ascii_string('test_unicode({})'.format(repr(' Pȅtȅr'))))()
         )
 
         self.assertEqual(
             33,
-            getattr(instance, 'test_unicode({})'.format(repr('wow 漢字')).encode('utf-8', 'replace'))()
+            getattr(instance, encode_non_ascii_string('test_unicode({})'.format(repr('wow 漢字'))))()
         )
 
     def test_genty_properly_composes_method_with_special_chars_in_dataset_name(self):

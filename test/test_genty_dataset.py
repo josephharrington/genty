@@ -1,12 +1,12 @@
 # coding: utf-8
 
 from __future__ import unicode_literals
-from unittest import TestCase
 
+from test.base_test_case import BaseTestCase
 from box.test.genty import genty_dataset
 
 
-class GentyDatasetTest(TestCase):
+class GentyDatasetTest(BaseTestCase):
     """Tests for :mod:`box.test.genty.genty_dataset`."""
 
     def test_empty_dataset_is_no_op(self):
@@ -25,7 +25,7 @@ class GentyDatasetTest(TestCase):
 
         # Assert that the expected 'name' with expected value is created.
         self.assertEqual(
-            {"u'a', u'b'": ('a', 'b')},
+            {"{}, {}".format(repr('a'), repr('b')): ('a', 'b')},
             some_func.genty_datasets,
         )
 
@@ -39,7 +39,8 @@ class GentyDatasetTest(TestCase):
 
         # Assert that the expected 'names' with expected values are created.
         self.assertEqual(
-            {"u'a', u'b'": ('a', 'b'), "100, 200, u'300'": (100, 200, '300')},
+            {"{}, {}".format(repr('a'), repr('b')): ('a', 'b'),
+             "100, 200, {}".format(repr('300')): (100, 200, '300')},
             some_func.genty_datasets,
         )
 
@@ -85,8 +86,8 @@ class GentyDatasetTest(TestCase):
         # Assert that the expected 'name' with expected value is created.
         self.assertEqual(
             {
-                "u'a', 53": ('a', 53),
-                "u'p', 54, 100": ('p', 54, 100),
+                "{}, 53".format(repr('a')): ('a', 53),
+                "{}, 54, 100".format(repr('p')): ('p', 54, 100),
                 "a_third_case": ('y',),
             },
             some_func.genty_datasets,

@@ -1,11 +1,12 @@
 # coding: utf-8
 
 from __future__ import unicode_literals
-from unittest import TestCase
+
+from test.base_test_case import BaseTestCase
 from box.test.genty import genty_repeat
 
 
-class GentyRepeatTest(TestCase):
+class GentyRepeatTest(BaseTestCase):
     """Tests for :mod:`box.test.genty.genty_repeat`."""
 
     def test_repeat_decorator_decorates_function_with_appropriate_repeat_count(self):
@@ -31,7 +32,7 @@ class GentyRepeatTest(TestCase):
             def _():
                 pass
 
-        self.assertIn('Please pick a value >= 0', context.exception.message)
+        self.assertIn('Please pick a value >= 0', str(context.exception))
 
     def test_repeat_allows_zero_iterations(self):
         @genty_repeat(0)

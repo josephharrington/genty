@@ -5,8 +5,11 @@ import functools
 import math
 import types
 import re
+import six
+from six.moves import xrange  # pylint: disable=redefined-builtin,import-error
 import sys
 from box.test.genty.genty_args import GentyArgs
+from box.test.genty.private import encode_non_ascii_string
 
 
 def genty(target_cls):
@@ -43,8 +46,8 @@ def _expand_tests(target_cls):
     :rtype:
         `generator` of `tuple` of (`unicode`, `function`)
     """
-    entries = dict(target_cls.__dict__.iteritems())
-    for key, value in entries.iteritems():
+    entries = dict(six.iteritems(target_cls.__dict__))
+    for key, value in six.iteritems(entries):
         if key.startswith('test') and isinstance(value, types.FunctionType):
             if not hasattr(value, 'genty_generated_test'):
                 yield key, value
@@ -68,7 +71,7 @@ def _expand_datasets(test_functions):
     for name, func in test_functions:
         datasets = getattr(func, 'genty_datasets', {})
         if datasets:
-            for dataset_name, dataset in datasets.iteritems():
+            for dataset_name, dataset in six.iteritems(datasets):
                 yield name, func, dataset_name, dataset
         else:
             yield name, func, None, None
@@ -323,10 +326,10 @@ def _add_method_to_class(
         func,
     )
 
-    test_method_name_for_dataset = test_method_name_for_dataset.encode(
-        'utf-8',
-        'replace',
+    test_method_name_for_dataset = encode_non_ascii_string(
+        test_method_name_for_dataset
     )
+
     test_method_for_dataset.__name__ = test_method_name_for_dataset
     test_method_for_dataset.genty_generated_test = True
 

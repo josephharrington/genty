@@ -6,13 +6,15 @@ from __future__ import unicode_literals
 # a live tutorial, showing the various features in action.
 
 from itertools import product
-from unittest import TestCase
+import six
+
+from test.base_test_case import BaseTestCase
 from box.test.genty import genty, genty_repeat, genty_dataset
 from box.test.genty.genty_args import genty_args
 
 
 @genty
-class ExampleTests(TestCase):
+class ExampleTests(BaseTestCase):
     @genty_repeat(10)
     def test_example_of_repeat(self):
         """This test will be run 10 times"""
@@ -29,7 +31,7 @@ class ExampleTests(TestCase):
         pass
 
     @genty_dataset(
-        some_test_case=(10, 'happy', unicode),
+        some_test_case=(10, 'happy', six.text_type),
         another_test_case=(7, 'sleepy', float),
     )
     def test_example_of_named_datasets(self, value, message, kind):
